@@ -1,10 +1,18 @@
-package com.mycompany.socketthread;
-
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package com.mycompany.socket;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
+/**
+ *
+ * @author Agustin
+ */
+
 
 public class Cliente {
 
@@ -13,45 +21,45 @@ public class Cliente {
         int puerto = 5000;         
 
         try (Socket socket = new Socket(host, puerto)) {
-            
+            System.out.println("Conectado al Servidor");
+
+            // Flujos de entrada y salida para la comunicación
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             Scanner scanner = new Scanner(System.in);
 
-            // 1. HILO DE LECTURA (Escucha al servidor en segundo plano)
-            // Esto permite recibir mensajes de otros mientras estás escribiendo.
-            Thread hiloLectura = new Thread(() -> {
-                try {
-                    String mensajeServidor;
-                    while ((mensajeServidor = in.readLine()) != null) {
-                        // Borra la línea de entrada actual de la consola para que el mensaje no se mezcle con lo que el usuario está escribiendo
-                        System.out.print("\r" + mensajeServidor + "\n> "); 
-                    }
-                } catch (Exception e) {
-                    System.out.println("\nDesconectado del servidor.");
-                }
-            });
-            hiloLectura.start();
+            
+            String mensajeServidor = in.readLine();
+            System.out.println("Servidor dice: " + mensajeServidor);
 
-            // 2. HILO PRINCIPAL DE ESCRITURA (Envía mensajes al servidor)
             String mensajeUsuario;
+
+            
             while (true) {
-                System.out.print("> ");
+                System.out.print("\nTú: ");
                 mensajeUsuario = scanner.nextLine();
 
-                if (mensajeUsuario != null && !mensajeUsuario.trim().isEmpty()) {
-                    out.println(mensajeUsuario);
+            
+                out.println(mensajeUsuario);
 
-                    if (mensajeUsuario.equalsIgnoreCase("/SALIR")) {
-                        break;
-                    }
+                // Esperar y leer la respuesta del servidor
+                mensajeServidor = in.readLine();
+                
+                // Si el servidor cerró la conexión o respondió nulo, salimos
+                if (mensajeServidor == null) {
+                    break;
+                }
+                
+                System.out.println(mensajeServidor);
+
+                
+                if (mensajeUsuario.equalsIgnoreCase("SALIR")) {
+                    break;
                 }
             }
 
             scanner.close();
-            // Cerramos el socket, lo que provocará que el hiloLectura termine por excepción.
-            socket.close(); 
-            System.out.println("Aplicación finalizada.");
+            System.out.println("Comunicación finalizada");
 
         } catch (Exception e) {
             System.out.println("No se pudo conectar al servidor.");
